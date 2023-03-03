@@ -1,0 +1,348 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include=FALSE}
+#
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/home/") #modificar a necesidad
+```
+
+# **Cambio estacional de las variables ambientales y su influencia sobre la producción de basidiomas Agaricales**
+### **Autores:** Navarra, Mauro; Maciel, Cecilia;  Bossi, Tomás; Caso, Josefina; Catalano Di Meo, Camila; Olmos, Justo; Rozenblit, Valentín; Valerga, Victoria
+***
+
+## **Introducción:**
+
+La Reserva Ecológica Costanera Sur es un ambiente poco estudiado en cuanto a su Funga (diversidad del reino Fungi), durante la última mitad de 2018 y la primera mitad de 2019 se realizó un relevamiento midiendo abundancia (número de basidiomas) y riqueza de especies de hongos Agaricales. En este trabajo exploramos la variación de abundancia de basidiomas Agaricales y qué variables pueden explicar estos cambios a lo largo de un año en dos bosques de alisos de río (*Tessaria integrifolia*) dentro de la reserva. Los bosques se diferencian en su estadio sucesional, ya que uno de ellos sufrió un incendio en 2005. Las variables que se midieron en pos de explicar los cambios en abundancia a lo largo del año fueron elegidas en base a condiciones que suelen modificar la producción de basidiomas. Las estrategias utilizadas para modelar los datos fueron elegidas en base al cumplimiento de supuestos de los modelos planteados, en un principio se consideró una distribución Poisson, dado que se trata de un conteo de basidiomas. Sin embargo, luego de un análisis apropiado se modificó por una distribución Binomial Negativa. 
+ 
+
+## **Objetivos:**
+
+El objetivo del trabajo es identificar qué variables ambientales son relevantes para la proliferación de basidiomas de hongos agaricales en los bosques de alisos de río de la Reserva Ecológica Costanera Sur, y determinar si el efecto de estas variables coincide con una mayor abundancia de hongos en otoño del 2019. 
+
+Proponemos como hipótesis que el incremento en la abundancia de basidiomas Agaricales en los bosques de *Tessaria integrifolia* en la RECS está asociado con cambios en variables ambientales, siendo estas óptimas en el otoño.
+
+## **Materiales y métodos:** 
+
+### **Diseño de Campo**  
+
+La Reserva Ecológica Costanera Sur (RECS) abarca 350 hectáreas, en particular, el bosque de aliso (*Tessaria integrifolia*) posee una superficie aproximada de 8 hectáreas y un perímetro de 2340 m. Allí se encuentran dos áreas bien diferenciadas: una zona con menor edad, que surgió de la expansión del bosque a partir de un incendio que hubo en el pastizal de cortaderas aledaño, en el año 2005 [1], a la cual nos referiremos como **Bosque de 2005** y otra que data desde los inicios de la reserva en 1985, referido como **Bosque de 1985**.
+
+### **Diseño muestral**   
+
+Se realizaron muestreos en el Bosque de alisos de la Reserva Ecológica Costanera Sur. El área total fue subdividida en dos como se mencionó anteriormente (Bosque 2005 y Bosque 1985). En ambos se seleccionaron 8 parcelas rectangulares de 6 m x 20 m (120 m2) ubicadas paralelas entre sí, cada una de ellas separadas por 20 m de distancia con respecto a su centro para garantizar su independencia [2] (figura 1). Las parcelas 1 a 8 corresponden al bosque de 2005 y las 11 a la 18 al bosque de 1985. El muestreo se realizó en un período de 12 meses, desde septiembre 2018 al mes de agosto de 2019 con una frecuencia mensual. 
+
+Se recolectaron y contabilizaron todos los basidiomas de Agaricales presentes dentro de las parcelas. También se registró la riqueza como la suma de especies para cada parcela según el mes de muestreo. Sumado a esto, se caracterizaron las parcelas en base a su cobertura vegetal de Tessaria integrifolia (Alisos) teniendo en cuenta la escala de Braun-Blanquet [3] y se midió la luz percibida durante 30 segundos caminando por la parcela con el luxómetro en posición horizontal a 1 metro del suelo.
+
+Finalmente, se registraron las variables ambientales temperatura, humedad relativa, ambas como el promedio del día de muestreo y los 4 anteriores, y precipitaciones acumuladas en ese mismo período (datos extraídos de Ogimet [4]). Se utilizó este intervalo de tiempo dado que se estima que la producción de basidiomas lleva aproximadamente 5 días.
+
+Dado que los niveles de las variables mencionadas no fueron asignados a las parcelas, se trata de un estudio observacional.
+
+
+```{r, out.width="100%", echo = F}
+library(png)
+library(knitr)
+img1_path <- "./parcelas.png"
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+include_graphics(img1_path)
+```
+Figura 1: Imágen satelital de las parcelas del bosque de Alisos 2005 (parcelas H01 a H08) y 1985 (parcelas H11 a H18)
+
+### **Variables y base de datos**   
+
+A fines de responder la pregunta de investigación se optó por tomar como variable respuesta la abundancia de basidiomas. Al tratarse de una variable de tipo cuantitativa discreta con cota mínima en 0 se asumió como primera opción una distribución Poisson.
+
+Se analizó la asociación entre la variable respuesta y una serie de variables explicativas de interés, presentadas y descritas a continuación. Algunas de ellas fueron incluidas en este análisis por ser directamente relevantes a la pregunta de investigación (variables ambientales como la temperatura, la humedad y las precipitaciones) o por ser indispensables dado el diseño muestral (n° de parcela, tipo de bosque), mientras que otras fueron incluidas como covariables para explicar parte de la variabilidad entre parcelas (variables como la luz y la cobertura de Alisos).
+
+**Variables explicativas:** 
+
+* **Bosque:** El tipo de bosque al que pertenece la parcela en la que se efectuó una dada medición. Cualitativa de efectos fijos. Dos niveles: ‘1985’ y ‘2005’.
+
+* **Temperatura:** Temperatura ambiente promedio entre 5 días: el día del muestreo y los cuatro días anteriores. Cuantitativa continua de efectos fijos. [Temperatura] = °C
+
+* **Humedad:** Humedad relativa porcentual ambiente promedio entre 5 días (idem temperatura). Cuantitativa continua de efectos fijos.
+
+* **Precipitaciones:** Suma acumulativa de las precipitaciones de 5 días (idem temperatura). Cuantitativa continua de efectos fijos. [Precipitaciones] = mm.
+
+* **Parcela:** ID de la parcela. Cualitativa de efectos aleatorios. 16 niveles: toma valores de 1 a 8 para las 8 parcelas del bosque ‘2005’ y de 11 a 18 para las 8 del bosque ‘1985’.
+
+* **Fecha:** Mes del muestreo (del año 2018 o 2019). Cualitativa de efectos fijos. 12 niveles: uno por mes entre septiembre del 2018 y agosto del 2019.
+
+* **Luz media relativa:** Cociente entre la luz media dentro de la parcela y la luz media exterior (medida en un espacio descubierto fuera de cada bosque). Cuantitativa continua de efectos fijos. Adimensional, porcentual.
+
+* **Cobertura:** Porcentaje de la superficie de una dada parcela cubierta por Alisos. Cuantitativa continua de efectos fijos.
+
+El diseño muestral cuenta con variables que varían a nivel temporal (a lo largo de los meses), espacial (entre parcelas individuales), o espacio-temporal (entre parcelas individuales y a lo largo de los meses), por lo cual se trata de un diseño multinivel. En este sentido, Temperatura, Humedad y Precipitaciones presentan variación a nivel temporal: para un dado nivel de Fecha (y para un dado mes) las 16 parcelas comparten los valores de las tres variables, por lo tanto, la variación del número de basidiomas entre parcelas no puede ser explicada por estas variables. La Cobertura, en cambio, es de variación espacial, presenta distintos valores para cada una de las 16 parcelas y es invariante en el tiempo a lo largo del año de muestreo. Finalmente, la Luz media relativa es de variación espacio-temporal y presenta distintos valores para cada parcela en cada mes de muestreo. Tanto la Cobertura como la Luz media relativa pueden explicar parte de la variación de la variable respuesta entre parcelas. 
+
+La variable Bosque no se ajusta a ninguna de estas tres categorías. A pesar de no variar en el tiempo tampoco es, estrictamente, de variación espacial; y por supuesto, no explica la variación entre las 8 parcelas de un mismo tipo de bosque.
+
+Dado que la pregunta biológica a investigar tiene un enfoque temporal en la variación del número de basidiomas, las variables Temperatura, Humedad y Precipitaciones serían candidatas a explicar estas variaciones.
+
+La base de datos cuenta con un total de 192 entradas, correspondientes a las 12 mediciones efectuadas sobre cada una de las 16 parcelas a lo largo del año de muestreo . Contiene datos faltantes únicamente en la variable Luz Media Relativa, para los cuales no  se realizó ningún tipo de imputación. Se presenta parte de la base de datos a continuación: 
+
+```{r carga base de datos, echo = F}
+library(knitr)
+rm(list=ls())
+#setwd("/home/grupo19/")
+datos_madre = read.csv("datos_madre.csv")
+datos_madre$Fecha = factor(datos_madre$Fecha, levels = list("septiembre", "octubre", "noviembre", "diciembre","enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto"))
+datos_madre$Bosque  = factor(datos_madre$Bosque)
+datos_madre$Parcela = factor(datos_madre$Parcela)
+kable(head(datos_madre, n = 20), col.names = c("ID", "N_basid.", "Parcela", "Bosque", "Fecha", "Temp.", "Humed.", "Precip.", "Cobert.", "Luz_media", "Riqueza"))
+```
+### **Modelos propuestos**   
+
+Se comenzó por plantear un modelo condicional aditivo completo, con Parcela como variable de efectos aleatorios y con la inclusión de todas las variables explicativas descritas previamente. Se asumió una potencial distribución Poisson de la variable respuesta, el número de basidiomas. Se evaluaron posibles colinealidades y se encontró una alta colinealidad entre Fecha y el resto de las variables, que llevó a su remoción del modelo.
+```{r modelo fecha, include = F}
+library(lme4)
+library(glmmTMB)
+library(car)
+library(DHARMa)
+library(performance)
+ 
+###
+ 
+m1 <- glmer(N_basidiomas ~ Bosque + Temperatura + Humedad + Precipitaciones + Cobertura + Luz_media_relativa + Fecha + (1|Parcela), data = datos_madre, family = poisson)
+ 
+# La variable temporal induce colinealidad, no la vamos a usar en los modelos.
+```
+```{r gvifs, echo=F}
+vifs <- data.frame(vif(m1))
+nombres <- c('Bosque','Temperatura','Humedad','Precipitaciones','Cobertura','Luz media relativa','Fecha')
+vifs <- data.frame(cbind(nombres, vifs$Df, round(vifs$GVIF, 2)))
+names(vifs) <- c('Variable','Df','GVIF')
+kable(vifs)
+```
+Al evaluar los supuestos del modelo sin Fecha se obtuvo un estadístico de dispersión de 46.55, indicando una sobredispersión que fue corregida proponiendo una distribución Binomial Negativa. Con este nuevo modelo, se observó el cumplimiento de todos los supuestos, incluyendo el supuesto de normalidad de los efectos aleatorios.
+
+Se prosiguió removiendo variables explicativas de manera secuencial y verificando el cumplimiento de supuestos en cada uno de los modelos generados en el proceso. En orden, se eliminaron las variables Precipitaciones, Luz media relativa y Temperatura. Dado que los modelos con y sin Luz media relativa fueron construidos con distinto número de observaciones (por los datos faltantes en Luz), no fue posible usar la función _drop1_ para la simplificación de los modelos sino hasta eliminar a la Luz media relativa. Para la remoción de Precipitaciones y Luz media relativa se tomó como criterio al grado de significancia del Test de Wald sobre el parámetro asociado a la variable correspondiente que figura en la salida de la función _summary_. Una vez eliminada la Luz media relativa, fue posible utilizar tanto _summary_ como _drop1_ para descartar Temperatura, obteniéndose el modelo final.
+
+```{r modelo sin fecha, include = F}
+m2 <- glmer(N_basidiomas ~ Bosque + Temperatura + Humedad + Precipitaciones + Cobertura + Luz_media_relativa + (1|Parcela), data = datos_madre, family = poisson)
+
+em2 <- resid(m2, type = "pearson")
+dispersionm2 <- sum(em2^2) / df.residual(m2)
+dispersionm2
+
+simulateResiduals(m2, n = 1000, plot = T)
+
+```
+```{r modelo nbinom, include = F}
+m3 <- glmmTMB(N_basidiomas ~ Luz_media_relativa + Temperatura + Humedad + Precipitaciones + Cobertura + Bosque + (1|Parcela), data = datos_madre, family = nbinom2)
+ 
+check_collinearity(m3)  #No hay problemas de colinearidad, salvo entre Bosque y Cobertura, pero no es demasiado grave y Bosque es                          de diseño, con lo que dejamos ambas
+parcela <- ranef(m3)$cond$Parcela$'(Intercept)'
+qqPlot(parcela)
+shapiro.test(parcela)  #p = 0.4013, 
+simComp <- simulateResiduals(m3, n=1000, plot = T)
+ 
+summary(m3) # Dispersion parameter for nbinom2 family (): 0.931
+```
+```{r modelo sin precipitaciones, include = F}
+m4 <- glmmTMB(N_basidiomas ~ Luz_media_relativa + Temperatura + Humedad + Cobertura + Bosque + (1|Parcela), data = datos_madre, family = nbinom2)
+ 
+check_collinearity(m4)
+parcela <- ranef(m4)$cond$Parcela$'(Intercept)'
+qqPlot(parcela)
+shapiro.test(parcela)
+simComp <- simulateResiduals(m4, n=1000, plot = T)
+ 
+summary(m4) # Dispersion parameter for nbinom2 family (): 0.916 
+```
+```{r modelo sin luz, include = F}
+m5 <- glmmTMB(N_basidiomas ~ Temperatura + Humedad + Cobertura + Bosque + (1|Parcela), data = datos_madre, family = nbinom2)
+ 
+check_collinearity(m5)  #No hay colinearidades graves
+parcela <- ranef(m5)$cond$Parcela$'(Intercept)'
+qqPlot(parcela)
+shapiro.test(parcela)  #Los efectos aleatorios no se alejan de la normalidad
+simComp <- simulateResiduals
+ 
+summary(m5)
+drop1(m5, test = "Chisq")
+```
+```{r modelo final nbinom, include = F}
+m6 <- glmmTMB(N_basidiomas ~ Humedad + Cobertura + Bosque + (1|Parcela), data = datos_madre, family = nbinom2)
+ 
+check_collinearity(m6)
+parcela <- ranef(m6)$cond$Parcela$'(Intercept)'
+qqPlot(parcela)
+shapiro.test(parcela)
+simComp <- simulateResiduals(m6, n=1000, plot = T)
+ 
+summary(m6)
+drop1(m6)
+```
+```{r modelo final tweedi y OLRE, include = F}
+m6_tw <- glmmTMB(N_basidiomas ~ Humedad + Bosque + Cobertura + (1|Parcela), data = datos_madre, family = tweedie)
+m6_OLRE <- glmmTMB(N_basidiomas ~ Humedad + Bosque + Cobertura + (1|Parcela) + (1|ID), data = datos_madre, family = nbinom2)
+```
+Posteriormente, se evaluaron posibles interacciones entre las variables remanentes en el modelo final, y se encontró que ninguna era significativa. Se realizaron además las comparaciones entre el modelo final y modelos alternativos usando la distribución Tweedie y OLRE-Poisson, y se encontró que el modelo con distribución Binomial Negativa es el de AIC mínimo.
+
+```{r tabla aics, echo = F}
+aics <- AIC(m6, m6_tw, m6_OLRE) # 1624.891, 1648.626
+aics$AIC <- round(aics$AIC, 2)
+nombres <- c('Binomial Negativa', 'Tweedie','OLRE')
+#data.frame(cbind(nombres, aics$df, aics$AIC))
+aics <- data.frame(cbind(nombres, aics$df, aics$AIC))
+names(aics) <- c('Modelo', 'df', 'AIC')
+library(knitr)
+kable(aics)
+```
+El modelo final presenta una leve colinealidad entre Cobertura y Bosque, con ambas variables teniendo un VIF cercano a 6. Además, a lo largo del proceso de simplificación, el test sobre el parámetro asociado a la variable Bosque arrojó siempre un efecto no significativo. A pesar de esto, Bosque permanece en el modelo final por ser considerada central en el diseño muestral. 
+```{r modelo final vif, include = F}
+m_final = m6
+check_collinearity(m_final)
+```
+
+## **Resultados:**
+
+El modelo final al que llegamos es el siguiente:
+
+$$\ln(E(Abundancia_{ij}) = \beta_{0} +  \beta_{1} \text{ Cobertura}_{ij} + \beta_{2} \text{ Humedad}_{ij} + \beta_{3} \text{ Bosque(2005)}_{ij} + P_{j}$$
+
+$$E(Abundancia_{ij})) = e^{\beta{0} +  \beta{1} \text{ Cobertura}{ij} + \beta{2} \text{ Humedad}{ij} + \beta{3} \text{ Bosque(2005)}{ij} + P_{j}}$$
+
+$$P \sim{NID(0,\sigma^{2}_{Parcela})}$$
+Donde i = [1,12] y j = [1,16]. Los supuestos del modelo se cumplen.
+
+```{r modelo supuestos, echo = F, fig.align='center', out.width="90%"}
+simComp <- simulateResiduals(m6, n=1000, plot = T)
+
+```
+Este modelo incluye dos variables explicativas de efectos significativos. Humedad (p-valor = 0.013) es una variable ambiental candidata a explicar la posible variación temporal en la abundancia de basidiomas. La otra variable de efecto significativo es la covariable Cobertura de Alisos (p-valor = 0.036), que varía entre parcelas pero se mantiene constante en el tiempo, con lo cual no aporta información pertinente sobre el cambio en la abundancia de hongos a lo largo del año 2019.
+
+En base al modelo propuesto, se pueden realizar inferencias y observar el efecto de las variables Humedad y Cobertura sobre la cantidad de basidiomas a lo largo del año. En esta tabla se muestran las magnitudes de efecto en la escala de la variable respuesta, con un intervalo de confianza al 95%, en la escala de la variable respuesta.
+
+```{r tabla efectos, message = F, echo = F, warning=F}
+library(sjPlot)
+#tab_model(m6, dv.labels = c("Abundancia (número de basidiomas)"), string.pred = "Predictores", string.est = "Valor estimado", #string.ci = "IC 95%", show.re.var = F, show.icc = F, show.ngroups = F, show.obs = F, show.r2 = F)
+tab <- data.frame(cbind(c('(Intercept)', 'Humedad', 'Cobertura', 'Bosque [2005]'),
+                        c(1.08, 1.03, 1.03, 0.33),
+                        c('0.15 – 7.78', '1.01 – 1.06', '1.00 – 1.06','0.06 – 1.89'),
+                        c(.937, .013, .036, .211)))
+names(tab) <- c('Predictores','Valor estimado', 'IC 95%', 'p-valor')
+
+library(knitr)
+kable(tab)#, caption='Abundancia (número de basidiomas)',align = "lccrr")
+```
+Por cada incremento en un 1% de cobertura, la abundancia de basidiomas incrementa en promedio un 3%. Del mismo modo, por cada incremento en un 1% de humedad relativa incrementa la abundancia en un 3%. A continuación se muestran los valores predichos de Abundancia (número de basidiomas) en función de la Humedad.
+
+
+
+```{r abundancia vs humedad, echo = F, fig.align='center'}
+library(ggeffects)
+library(ggplot2)
+estim<-ggpredict(m_final, terms = c("Humedad"))
+plot(estim, add.data = F)+
+        ggtitle("Valores predichos para Número de Basidiomas")+
+        ylab('Número de Basidiomas')
+```
+Por otra parte, la humedad presenta un pico en mayo.
+
+```{r humedad vs mes, echo = F, warning=F, fig.align='center'}
+mayo <- subset(datos_madre, Fecha =='mayo')
+a <- ifelse(levels(datos_madre$Fecha) == 'mayo', 'red', 'black')
+ggplot(datos_madre, aes(x=Fecha, y=Humedad)) + 
+geom_point(size=2) +
+geom_point(data=mayo, color='red', size=3.5)+
+geom_text(data=mayo, aes(label=Humedad), hjust=-.5)+
+geom_text(data=mayo,label='Punto de Máxima Humedad', vjust=+2)+
+theme(axis.text.x = element_text(colour=a, angle=-45))+
+  ggtitle("Cambio en la Humedad durante el periodo de medición")
+```
+Esta correlación muestra que en mayo la humedad para la aparición de basidiomas fue óptima. Esto se vió reflejado en el pico de abundancia observado en este mes. 
+
+```{r abundancia vs fecha, echo = F, fig.align='center'}
+library(doBy)
+medias <- summaryBy(N_basidiomas ~ Fecha + Bosque, data=datos_madre, FUN=c(length,mean,sd))
+names(medias) <- c('Fecha','Bosque','N_datos','Basidiomas_promedio','Basidiomas_sd')
+pd <- position_dodge(0.1)
+ggplot(medias, aes(x=Fecha, y=Basidiomas_promedio, colour=Bosque, group=Bosque)) + 
+  geom_errorbar(aes(ymin=ifelse(Basidiomas_promedio-Basidiomas_sd < 0, 0, Basidiomas_promedio-Basidiomas_sd), ymax=Basidiomas_promedio+Basidiomas_sd), colour="black", width=.1, position=pd) +
+  geom_line(position=pd, size=2) +
+  geom_point(position=pd, size=3, shape=21, fill="white") + # 21 is filled circle
+  xlab("Fecha (mes)") +
+  ylab("Número de Basidiomas Promedio") +
+  scale_colour_hue(name="Ambiente",    # Legend label, use darker colors
+                   breaks=c("1985", "2005"),
+                   labels=c("Bosque de 1985", "Bosque de 2005"),
+                   l=40) +                    # Use darker colors, lightness=40
+  ggtitle("Efecto del bosque en el Número de Basidiomas a lo largo del año \n(Gráfico de perfiles con barras de error)") +
+  expand_limits(y=5, x=0) +                        # Expand y range
+  scale_y_continuous(breaks=0:20*75) +         # Set tick every 4
+  theme_bw() +
+  theme(legend.justification=c(1.25,1.5),
+        legend.position=c(1,1),
+        axis.text.x=element_text(angle=-30))
+
+```
+Estos resultados aportan evidencia a favor de nuestra hipótesis biológica sobre la relación entre la proliferación de basidiomas y el cambio en las variables ambientales durante otoño de 2019 en el bosque de Alisos, y se corresponde con el conocimiento general sobre esta estación y el aumento reproductivo en hongos Agaricales. 
+
+Si bien los Bosques no poseen diferencias significativas, el bosque de 2005 tiene una mayor abundancia aparente, esto puede estar relacionado al hecho de que la cobertura del mismo (factor que sí tiene efectos significativo) es mayor a la del bosque de 1985.
+
+```{r cobertura vs bosque, echo = F}
+media = summaryBy(Cobertura~Bosque, data = datos_madre, FUN= c(mean,sd))
+ggplot(media, aes(x=Bosque, y=Cobertura.mean, fill = Bosque)) + geom_col() +
+  geom_errorbar(aes(ymin = Cobertura.mean-Cobertura.sd, ymax = Cobertura.mean+Cobertura.sd), width = .1)+
+  theme(legend.position = "none")+
+  ylab("Cobertura porcentual media")+
+  ggtitle("Cobertura media en ambos bosques de Alisos")
+        #geom_errorbar(aes(ymin = media-sd, ymax = media+sd))
+```
+
+## **Conclusiones**  
+
+Utilizando una muestra representativa de parcelas en los bosques de alisos (Reserva Ecológica Costanera Sur) se logró establecer una relación directa entre la abundancia de basidiomas y dos variables, humedad y cobertura. El punto de mayor humedad anual coincide con los meses correspondientes al otoño, lo cual forma evidencia a favor de nuestra pregunta biológica y es congruente con el conocimiento previo. También se pudo dilucidar una relación entre la cobertura del bosque de alisos, el número de basidiomas, y el tipo de bosque; el bosque de mayor cobertura posee la mayor cantidad de basidiomas.
+
+## **Anexo** 
+
+En esta sección vamos a discutir sobre los efectos aleatorios y la variabilidad entre las parcelas. Además, mencionaremos resultados parciales con información biológicamente pertinente basados en un modelo con Riqueza como variable respuesta.
+
+En un principio, la variable aleatoria Parcela contenía mucha variabilidad no explicada por el modelo, tanta que la distribución de esta variable aleatoria no seguía una distribución Normal. Gran parte de esta variación inter-parcela provenía de las parcelas uno y cinco dentro del Bosque viejo, las cuales fueron particularmente productivas en cantidad de basidiomas el año 2019. Considerando este problema, se decidió añadir algún tipo de covariable al nivel de parcela, las variables elegidas de la base de datos original del muestreo fueron Luz media relativa y Cobertura de alisos. De esta manera, parte de la variación sería absorbida por nuevas variables fijas y el efecto aleatorio se restringiría a variabilidad biológica o variables no medidas ni incluidas en el modelo final.
+
+Al agregar estas nuevas variables, se solucionó el problema con el supuesto de normalidad. Si bien la luz variaba en la parcela y en el tiempo, y la cobertura solo en parcela, ambas lograban explicar una porción de la variabilidad entre las parcelas. En el modelo final se optó por dejar Cobertura al ser esta significativa.
+
+El modelo final tiene un CCI de 0.24, con lo que solo el 24% de la variabilidad aleatoria de nuestros datos está explicada por la variable aleatoria Parcela [5]. Esto resulta llamativo ya que, como mencionamos antes, las parcelas tenían tal variabilidad que sus efectos no resultaban normales sin la ayuda de las covariables. El hecho de que la variable Parcela explique solo el 24% implica que el 76% de la variabilidad aleatoria está dentro de las parcelas y no es explicada por el modelo, por lo cual la variabilidad dentro de las parcelas es incluso mayor a la que observamos entre estas.
+
+Similarmente al curso de acción que se tomó para modelar la abundancia (número de basidiomas), se decidió probar con la Riqueza como variable respuesta. Se observó que en mayo también existía un máximo. En el modelo final una de las variables fijas ambientales que quedó últimamente seleccionada (por los métodos anteriormente mencionados) fue Precipitaciones (p-valor = 1.37e-6). Este resultado es relevante biológicamente, ya que indicaría una asociación en la aparición de especies pluviofílicas y el aumento de la riqueza total en el año 2019, mayormente en la estación de otoño. Si el análisis se llevase más lejos se podría investigar la proliferación de basidiomas por especie en distintos meses y cuales son más productivas o generan mayor variación en el número de basidiomas.
+```{r riqueza son Fecha poisson, include=F}
+# m1_riq <- glmer(Riqueza ~ Bosque + Temperatura + Humedad + Precipitaciones + Cobertura + Luz_media_relativa + (1|Parcela), data = datos_madre, family = poisson)
+#   
+# res = residuals(m1_riq, type ="pearson")
+# dispersionm2 <- sum(res^2) / df.residual(m1_riq) 
+# dispersionm2 #subdispersion
+# simulateResiduals(m1_riq, n = 1000, plot = T)
+
+```
+```{r riqueza sin fecha CMP, include = F}
+# m2_riq <- glmmTMB(Riqueza ~ Bosque + Temperatura + Humedad + Precipitaciones + Cobertura + Luz_media_relativa + (1|Parcela), data = datos_madre, family = compois)
+# simulateResiduals(m2_riq, n = 1000, plot = T)
+# summary(m2_riq)  #luz es el menos significativo
+```
+```{r riqueza sin Luz media, include = F}
+# m3_riq <- glmmTMB(Riqueza ~ Bosque + Temperatura + Humedad + Precipitaciones + Cobertura + (1|Parcela), data = datos_madre, family = compois)
+# summary(m3_riq)
+```
+```{r riqueza sin Humedadm, include = F}
+# m4_riq <- glmmTMB(Riqueza ~ Bosque + Temperatura + Precipitaciones + Cobertura + (1|Parcela), data = datos_madre, family = compois)
+# summary(m4_riq)
+# simulateResiduals(m4_riq, n = 1000, plot = T)
+```
+
+## **Bibliografía:**
+
+[1] Sirolli, H., Kalesnik, F.A. 2011. Effects of fire on a forest-grassland ecotone in De La Plata     River, Argentina. Plant Ecology 212: 689–700.
+
+[2] Sutherland, W. J. 2006. Ecological census techniques: a handbook. Cambridge university press.
+
+[3] Kent, M. 2012. Vegetation Description and Data Analysis, A Practical Approach. Ed. Willey-
+Blackwell, Second edition. 438 pp.
+
+[4] https://www.ogimet.com, visitada en el mes de octubre de 2021.
+
+[5] Nakagawa S, Johnson P, Schielzeth H (2017) The coefficient of determination R2 and intra-class correlation coefficient from generalized linear mixed-effects models revisted and expanded. J. R. Soc. Interface 14. doi: 10.1098/rsif.2017.0213
+
+
